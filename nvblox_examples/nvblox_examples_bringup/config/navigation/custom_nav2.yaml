@@ -194,7 +194,10 @@ global_costmap:
       track_unknown_space: False
       mark_threshold: 2
       always_send_full_costmap: False
-      plugins: ['nvblox_layer', 'inflation_layer']
+      plugins: ['static_layer', 'nvblox_layer', 'inflation_layer']
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: True
@@ -211,7 +214,8 @@ map_server:
     use_sim_time: True
     # Overridden in launch by the "map" launch configuration or provided default value.
     # To use in yaml, remove the default "map" value in the tb3_simulation_launch.py file & provide full path to map below.
-    yaml_filename: ""
+    yaml_filename: "/workspaces/isaac_ros-dev/src/IsaacSim-ros_workspaces/jazzy_ws/src/isaac_ros_nvblox/nvblox_examples/nvblox_examples_bringup/config/navigation/carter_warehouse_navigation.yaml"
+    
 map_saver:
   ros__parameters:
     use_sim_time: True

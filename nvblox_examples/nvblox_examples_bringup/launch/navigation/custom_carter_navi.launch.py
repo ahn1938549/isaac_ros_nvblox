@@ -16,19 +16,30 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import List
-
+import os
 import isaac_ros_launch_utils.all_types as lut
 import isaac_ros_launch_utils as lu
-
+from ament_index_python.packages import get_package_share_directory
 from nvblox_ros_python_utils.nvblox_launch_utils import NvbloxMode
 from nvblox_ros_python_utils.nvblox_constants import NVBLOX_CONTAINER_NAME
-
+from launch_ros.actions import Node
+from launch.substitutions import LaunchConfiguration
 
 def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]:
     # Nav2 base parameter file
     actions = []
     nav_params_path = lu.get_path('nvblox_examples_bringup', 'config/navigation/carter_nav2.yaml')
+
+    map_dir = LaunchConfiguration(
+        "map",
+        default=os.path.join(
+           "/workspaces/isaac_ros-dev/src/IsaacSim-ros_workspaces/jazzy_ws/src/isaac_ros_nvblox/nvblox_examples/nvblox_examples_bringup/config/navigation/carter_warehouse_navigation.yaml"
+        ),
+    )
+
+
     actions.append(lut.SetParametersFromFile(str(nav_params_path)))
+    # actions.append(lut.SetParametersFromFile(str(map_dir)))
     actions.append(lut.SetParameter('use_sim_time', True))
     # Enabling nav2
     actions.append(
@@ -41,7 +52,7 @@ def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]
         lu.set_parameter(
             namespace='/global_costmap/global_costmap',
             parameter='plugins',
-            value=['nvblox_layer', 'inflation_layer'],
+            value=['static_layer', 'nvblox_layer', 'inflation_layer'],
         ))
 
     # Modifying nav2 parameters depending on nvblox mode
@@ -73,11 +84,38 @@ def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]
             'launch/navigation_launch.py',
             launch_arguments={
                 'params_file': str(nav_params_path),
+                'map': map_dir,
                 'container_name': args.container_name,
                 'use_composition': 'True',
                 'use_sim_time': 'True',
+                'slam': 'False',
             },
         ))
+
+    actions.append(
+        Node(
+            package='nav2_map_server',
+            executable='map_server',
+            name='map_server',
+            output='screen',
+            parameters=[{'use_sim_time': True, 'yaml_filename': map_dir}],
+        )
+    )
+
+
+    actions.append(
+        Node(
+            package='nav2_lifecycle_manager',
+            executable='lifecycle_manager',
+            name='lifecycle_manager_map',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'autostart': True,  # true면 launch 시 자동 configure → activate
+                'node_names': ['map_server']  # 관리할 노드 목록
+            }]
+        )
+    )
     actions.append(lu.static_transform('map', 'odom'))
 
     return actions
