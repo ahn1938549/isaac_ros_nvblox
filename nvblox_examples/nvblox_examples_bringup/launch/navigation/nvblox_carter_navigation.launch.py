@@ -27,7 +27,7 @@ from nvblox_ros_python_utils.nvblox_constants import NVBLOX_CONTAINER_NAME
 def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]:
     # Nav2 base parameter file
     actions = []
-    nav_params_path = lu.get_path('nvblox_examples_bringup', 'config/navigation/carter_nav2.yaml')
+    nav_params_path = lu.get_path('nvblox_examples_bringup', 'config/navigation/carter_warehouse_navigation.yaml')
     actions.append(lut.SetParametersFromFile(str(nav_params_path)))
     actions.append(lut.SetParameter('use_sim_time', True))
     # Enabling nav2

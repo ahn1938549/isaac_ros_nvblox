@@ -57,27 +57,27 @@ def generate_launch_description() -> LaunchDescription:
 
     # Navigation
     # NOTE: needs to be called before the component container because it modifies params globally
-    actions.append(
-        lu.include(
-            'nvblox_examples_bringup',
-            'launch/navigation/nvblox_carter_navigation.launch.py',
-            launch_arguments={
-                'container_name': NVBLOX_CONTAINER_NAME,
-                'mode': args.mode,
-            },
-            condition=IfCondition(lu.is_true(args.navigation))))
+    # actions.append(
+    #     lu.include(
+    #         'nvblox_examples_bringup',
+    #         'launch/navigation/custom_carter_navi.launch.py',
+    #         launch_arguments={
+    #             'container_name': NVBLOX_CONTAINER_NAME,
+    #             'mode': args.mode,
+    #         },
+    #         condition=IfCondition(lu.is_true(args.navigation))))
 
     # Container
     actions.append(
         lu.component_container(
             NVBLOX_CONTAINER_NAME, container_type='isolated', log_level=args.log_level))
 
-    # People segmentation
-    # actions.append(
-    #     lu.include(
-    #         'semantic_label_conversion',
-    #         'launch/semantic_label_conversion.launch.py',
-    #         condition=IfCondition(lu.has_substring(args.mode, NvbloxMode.people_segmentation))))
+    #People segmentation
+    actions.append(
+        lu.include(
+            'semantic_label_conversion',
+            'launch/semantic_label_conversion.launch.py',
+            condition=IfCondition(lu.has_substring(args.mode, NvbloxMode.people_segmentation))))
 
     # Nvblox
     actions.append(
@@ -93,11 +93,11 @@ def generate_launch_description() -> LaunchDescription:
             }))
 
     # Play ros2bag
-    actions.append(
-        lu.play_rosbag(
-            bag_path=args.rosbag,
-            additional_bag_play_args=args.rosbag_args,
-            condition=IfCondition(lu.is_valid(args.rosbag))))
+    # actions.append(
+    #     lu.play_rosbag(
+    #         bag_path=args.rosbag,
+    #         additional_bag_play_args=args.rosbag_args,
+    #         condition=IfCondition(lu.is_valid(args.rosbag))))
 
     # Visualization
     actions.append(

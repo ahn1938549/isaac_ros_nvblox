@@ -28,17 +28,13 @@ from launch.substitutions import LaunchConfiguration
 def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]:
     # Nav2 base parameter file
     actions = []
-    nav_params_path = lu.get_path('nvblox_examples_bringup', 'config/navigation/carter_nav2.yaml')
+    
 
-    map_dir = LaunchConfiguration(
-        "map",
-        default=os.path.join(
-           "/workspaces/isaac_ros-dev/src/IsaacSim-ros_workspaces/jazzy_ws/src/isaac_ros_nvblox/nvblox_examples/nvblox_examples_bringup/config/navigation/carter_warehouse_navigation.yaml"
-        ),
-    )
+    nav_params_path = os.path.join(get_package_share_directory("nvblox_examples_bringup"), "config/navigation", "custom_nav2.yaml")
 
+    map_yaml_path = os.path.join(get_package_share_directory("nvblox_examples_bringup"), "config/navigation", "carter_warehouse_navigation.yaml")
 
-    actions.append(lut.SetParametersFromFile(str(nav_params_path)))
+    # actions.append(lut.SetParametersFromFile(str(nav_params_path)))
     # actions.append(lut.SetParametersFromFile(str(map_dir)))
     actions.append(lut.SetParameter('use_sim_time', True))
     # Enabling nav2
@@ -56,19 +52,27 @@ def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]
         ))
 
     # Modifying nav2 parameters depending on nvblox mode
-    mode = NvbloxMode[args.mode]
-    if mode is NvbloxMode.static:
-        costmap_topic_name = '/nvblox_node/static_map_slice'
-    elif mode in [NvbloxMode.dynamic, NvbloxMode.people_segmentation]:
-        costmap_topic_name = '/nvblox_node/combined_map_slice'
-    else:
-        raise Exception(f'Navigation in mode {mode} not implemented.')
+
+    #### BEOFRE MODITFY
+    # mode = NvbloxMode[args.mode]
+    # if mode is NvbloxMode.static:
+    #     costmap_topic_name = '/nvblox_node/static_map_slice'
+    # elif mode in [NvbloxMode.dynamic, NvbloxMode.people_segmentation]:
+    #     costmap_topic_name = '/nvblox_node/combined_map_slice'
+    # else:
+    #     raise Exception(f'Navigation in mode {mode} not implemented.')
+    #####
+
+    #### AFTER MODITFY
+    costmap_topic_name_static = '/nvblox_node/static_map_slice'
+    costmap_topic_name = '/nvblox_node/combined_map_slice'
+    #####
 
     actions.append(
         lu.set_parameter(
             namespace='/global_costmap/global_costmap',
             parameter='nvblox_layer.nvblox_map_slice_topic',
-            value=costmap_topic_name,
+            value=costmap_topic_name_static,
         ))
     actions.append(
         lu.set_parameter(
@@ -83,10 +87,10 @@ def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]
             'nav2_bringup',
             'launch/navigation_launch.py',
             launch_arguments={
-                'params_file': str(nav_params_path),
-                'map': map_dir,
+                'params_file': nav_params_path,
+                # 'map': map_yaml_path,
                 'container_name': args.container_name,
-                'use_composition': 'True',
+                'use_composition': 'False',
                 'use_sim_time': 'True',
                 'slam': 'False',
             },
@@ -98,7 +102,7 @@ def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]
             executable='map_server',
             name='map_server',
             output='screen',
-            parameters=[{'use_sim_time': True, 'yaml_filename': map_dir}],
+            parameters=[{'use_sim_time': True, 'yaml_filename': map_yaml_path}],
         )
     )
 
@@ -107,16 +111,53 @@ def add_nvblox_carter_navigation(args: lu.ArgumentContainer) -> List[lut.Action]
         Node(
             package='nav2_lifecycle_manager',
             executable='lifecycle_manager',
-            name='lifecycle_manager_map',
+            name='lifecycle_manager_localization',
             output='screen',
             parameters=[{
                 'use_sim_time': True,
-                'autostart': True,  # true면 launch 시 자동 configure → activate
-                'node_names': ['map_server']  # 관리할 노드 목록
+                'autostart': True,
+                'node_names': ['map_server', 'amcl']
             }]
         )
     )
-    actions.append(lu.static_transform('map', 'odom'))
+
+    actions.append(
+        Node(
+            package='pointcloud_to_laserscan', executable='pointcloud_to_laserscan_node',
+            remappings=[('cloud_in', ['/front_3d_lidar/point_cloud']),
+                        ('scan', ['/scan'])],
+            parameters=[{
+                'target_frame': 'front_3d_lidar',
+                'transform_tolerance': 0.01,
+                'min_height': -0.4,
+                'max_height': 1.5,
+                'angle_min': -1.5708,  # -M_PI/2
+                'angle_max': 1.5708,  # M_PI/2
+                'angle_increment': 0.0087,  # M_PI/360.0
+                'scan_time': 0.3333,
+                'range_min': 0.05,
+                'range_max': 100.0,
+                'use_inf': True,
+                'inf_epsilon': 1.0,
+                # 'concurrency_level': 1,
+                'use_sim_time': True,
+            }],
+            name='pointcloud_to_laserscan'
+        )
+    )
+
+    actions.append(
+        Node(
+            package='nav2_amcl',
+            executable='amcl',
+            name='amcl',
+            output='screen',
+            parameters=[
+                nav_params_path,
+                {'use_sim_time': True}
+            ],
+        ),
+    )
 
     return actions
 

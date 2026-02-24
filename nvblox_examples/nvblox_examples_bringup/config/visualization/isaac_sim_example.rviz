@@ -11,7 +11,6 @@ Panels:
         - /Nvblox1
         - /Sensors1
         - /Map1
-        - /Map1/Status1
         - /Map1/Topic1
       Splitter Ratio: 0.6176470518112183
     Tree Height: 913
@@ -137,7 +136,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: true
-      Enabled: false
+      Enabled: true
       Name: Nvblox
     - Class: rviz_common/Group
       Displays:
@@ -332,7 +331,7 @@ Visualization Manager:
       Name: Map
       Topic:
         Depth: 5
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
@@ -391,25 +390,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 24.941743850708008
+      Distance: 52.660762786865234
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.6177854537963867
-        Y: -0.4636806845664978
-        Z: 1.1600611209869385
+        X: 15.381426811218262
+        Y: 25.36528778076172
+        Z: -0.3138063848018646
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4547971487045288
+      Pitch: 1.5147963762283325
       Target Frame: camera_link
       Value: Orbit (rviz)
-      Yaw: 3.130420446395874
+      Yaw: 6.27678108215332
     Saved: ~
 Window Geometry:
   Color Image:
